@@ -300,6 +300,32 @@ export function handleRotationChange(e) {
   // it will take effect on the next optimization attempt
 }
 
+export function handleToroidalXChange(e) {
+  const checked = e.target.checked;
+  if (!state.loaded) return;
+  state.setUseToroidalX(checked);
+  // Recalculate all local scores since edge behavior changed
+  const useVector = state.useVector;
+  for (let pos = 0; pos < state.tileCount; pos++) {
+    state.localScore[pos] = algorithm.computeLocalScore(pos, useVector);
+    data.pushFrontier(pos);
+  }
+  drawOverlay();
+}
+
+export function handleToroidalYChange(e) {
+  const checked = e.target.checked;
+  if (!state.loaded) return;
+  state.setUseToroidalY(checked);
+  // Recalculate all local scores since edge behavior changed
+  const useVector = state.useVector;
+  for (let pos = 0; pos < state.tileCount; pos++) {
+    state.localScore[pos] = algorithm.computeLocalScore(pos, useVector);
+    data.pushFrontier(pos);
+  }
+  drawOverlay();
+}
+
 export function handleSpeedChange(e, inputEls, setSpeed) {
   const speed = parseInt(e.target.value);
   inputEls.outSpeed.textContent = speed;

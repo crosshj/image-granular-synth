@@ -42,21 +42,25 @@ export function xyOf(pos) {
 
 export function nPos(pos) {
   const [x, y] = xyOf(pos);
+  if (!state.useToroidalY && y === 0) return null; // No neighbor at top edge
   return posOf(x, (y - 1 + state.rows) % state.rows);
 }
 
 export function sPos(pos) {
   const [x, y] = xyOf(pos);
+  if (!state.useToroidalY && y === state.rows - 1) return null; // No neighbor at bottom edge
   return posOf(x, (y + 1) % state.rows);
 }
 
 export function wPos(pos) {
   const [x, y] = xyOf(pos);
+  if (!state.useToroidalX && x === 0) return null; // No neighbor at left edge
   return posOf((x - 1 + state.cols) % state.cols, y);
 }
 
 export function ePos(pos) {
   const [x, y] = xyOf(pos);
+  if (!state.useToroidalX && x === state.cols - 1) return null; // No neighbor at right edge
   return posOf((x + 1) % state.cols, y);
 }
 

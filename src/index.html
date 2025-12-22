@@ -35,6 +35,16 @@
           <span>Rotation</span>
         </label>
 
+        <label class="toggle">
+          <input id="chkToroidalX" type="checkbox" checked />
+          <span>Wrap X</span>
+        </label>
+
+        <label class="toggle">
+          <input id="chkToroidalY" type="checkbox" checked />
+          <span>Wrap Y</span>
+        </label>
+
         <label class="range">
           <span>Speed</span>
           <input id="rngSpeed" type="range" min="1" max="60" value="20" />
@@ -86,6 +96,8 @@
         chkOverlay: getElement("chkOverlay"),
         chkVector: getElement("chkVector"),
         chkRotation: getElement("chkRotation"),
+        chkToroidalX: getElement("chkToroidalX"),
+        chkToroidalY: getElement("chkToroidalY"),
         rngSpeed: getElement("rngSpeed"),
         outSpeed: getElement("outSpeed"),
       };

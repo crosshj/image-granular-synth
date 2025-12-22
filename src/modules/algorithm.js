@@ -63,6 +63,7 @@ export function scoreSeam(
 // seam between pos and its neighbor in dir (dir is from pos perspective)
 export function seamDir(pos, dir, useVector) {
   const pN = data.neighborPos(pos, dir);
+  if (pN === null) return 0; // No neighbor, no seam cost
   const a = state.board[pos];
   const b = state.board[pN];
   return scoreSeam(
@@ -85,15 +86,20 @@ export function blobTerm(pos) {
   let sL = 0,
     sA = 0,
     sB = 0;
+  let count = 0;
   for (let d = 0; d < 4; d++) {
-    const tn = state.board[data.neighborPos(pos, d)].tileId;
+    const neighborIdx = data.neighborPos(pos, d);
+    if (neighborIdx === null) continue; // Skip null neighbors
+    const tn = state.board[neighborIdx].tileId;
     sL += state.tileMeanL[tn];
     sA += state.tileMeanA[tn];
     sB += state.tileMeanB[tn];
+    count++;
   }
-  const L2 = sL * 0.25,
-    A2 = sA * 0.25,
-    B2 = sB * 0.25;
+  if (count === 0) return 0; // No neighbors at all
+  const L2 = sL / count,
+    A2 = sA / count,
+    B2 = sB / count;
 
   return data.oklabDist2_3(L1, A1, B1, L2, A2, B2);
 }
@@ -117,6 +123,7 @@ export function updateLocalScoresAround(pos, useVector) {
     data.wPos(pos),
   ];
   for (const p of list) {
+    if (p === null) continue; // Skip null neighbors
     state.localScore[p] = computeLocalScore(p, useVector);
     data.pushFrontier(p);
   }
@@ -229,8 +236,14 @@ export function pickPosAWithCursor(useVector) {
   }
 
   const dir = chooseLocalStepDir(state.cursorPos, useVector);
-  state.updateCursorPos(data.neighborPos(state.cursorPos, dir));
-  state.updateCursorStayCount(0);
+  const newPos = data.neighborPos(state.cursorPos, dir);
+  if (newPos !== null) {
+    state.updateCursorPos(newPos);
+    state.updateCursorStayCount(0);
+  } else {
+    // Can't move in that direction (edge with no wrap), stay put
+    state.updateCursorStayCount(state.cursorStayCount + 1);
+  }
   return state.cursorPos;
 }
 
@@ -387,6 +400,8 @@ export function deltaForSwap(posA, posB, newA, newB, useVector) {
     data.sPos(posB),
     data.wPos(posB),
   ]);
+  // Filter out null neighbors
+  affectedSet.delete(null);
   const affected = Array.from(affectedSet);
 
   let before = 0;

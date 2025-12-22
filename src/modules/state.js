@@ -22,6 +22,8 @@ export let running = false;
 export let loaded = false;
 export let useVector = true; // Whether to use vector scoring
 export let allowRotation = true; // Whether tiles can be rotated during optimization
+export let useToroidalX = true; // Whether to wrap around left-right edges
+export let useToroidalY = true; // Whether to wrap around top-bottom edges
 
 export let imgW = 0;
 export let imgH = 0;
@@ -85,6 +87,12 @@ export function setUseVector(value) {
 }
 export function setAllowRotation(value) {
   allowRotation = value;
+}
+export function setUseToroidalX(value) {
+  useToroidalX = value;
+}
+export function setUseToroidalY(value) {
+  useToroidalY = value;
 }
 export function setImgDimensions(w, h) {
   imgW = w;

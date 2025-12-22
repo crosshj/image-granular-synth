@@ -72,6 +72,8 @@ export function init({ canvas, overlay, controls, stats, inputs }) {
   // Set initial state
   state.setUseVector(true);
   state.setAllowRotation(true);
+  state.setUseToroidalX(true);
+  state.setUseToroidalY(true);
 
   // Update initial UI state
   controls.btnReset.disabled = true;
@@ -108,6 +110,12 @@ export function init({ canvas, overlay, controls, stats, inputs }) {
   inputs.chkVector.addEventListener("change", (e) => ui.handleVectorChange(e));
   inputs.chkRotation.addEventListener("change", (e) =>
     ui.handleRotationChange(e)
+  );
+  inputs.chkToroidalX.addEventListener("change", (e) =>
+    ui.handleToroidalXChange(e)
+  );
+  inputs.chkToroidalY.addEventListener("change", (e) =>
+    ui.handleToroidalYChange(e)
   );
   inputs.rngSpeed.addEventListener("input", (e) =>
     ui.handleSpeedChange(e, inputEls, (speed) => {
