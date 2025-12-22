@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tile Shuffle Synth</title>
+    <link rel="stylesheet" href="index.css" />
+  </head>
+  <body>
+    <header>
+      <div class="row">
+        <label class="file">
+          <input id="file" type="file" accept="image/*" />
+          <span>Select image</span>
+        </label>
+
+        <button id="btnReset" disabled>Reset</button>
+        <button id="btnPlay" disabled>Play</button>
+        <button id="btnStep" disabled>Step</button>
+
+        <label class="toggle">
+          <input id="chkOverlay" type="checkbox" checked />
+          <span>Overlay</span>
+        </label>
+
+        <label class="toggle">
+          <input id="chkVector" type="checkbox" checked />
+          <span>Vector (V2)</span>
+        </label>
+
+        <label class="range">
+          <span>Speed</span>
+          <input id="rngSpeed" type="range" min="1" max="60" value="20" />
+          <output id="outSpeed">20</output>
+        </label>
+
+        <div class="stats">
+          <div>Tiles: <span id="statTiles">-</span></div>
+          <div>Attempts/s: <span id="statAps">-</span></div>
+          <div>Accepted/s: <span id="statAcc">-</span></div>
+          <div>Last Δ: <span id="statDelta">-</span></div>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <div id="stage">
+        <canvas id="canvas"></canvas>
+        <canvas id="overlay"></canvas>
+      </div>
+    </main>
+
+    <script type="module">
+      import { init } from "./index.js";
+
+      const getElement = (id) => document.getElementById(id);
+
+      // Collect DOM element references
+      const canvas = getElement("canvas");
+      const overlay = getElement("overlay");
+
+      const controls = {
+        btnReset: getElement("btnReset"),
+        btnPlay: getElement("btnPlay"),
+        btnStep: getElement("btnStep"),
+      };
+
+      const stats = {
+        tiles: getElement("statTiles"),
+        aps: getElement("statAps"),
+        acc: getElement("statAcc"),
+        delta: getElement("statDelta"),
+      };
+
+      const inputs = {
+        file: getElement("file"),
+        chkOverlay: getElement("chkOverlay"),
+        chkVector: getElement("chkVector"),
+        rngSpeed: getElement("rngSpeed"),
+        outSpeed: getElement("outSpeed"),
+      };
+
+      // Initialize app with canvas and UI elements
+      init({ canvas, overlay, controls, stats, inputs });
+    </script>
+  </body>
+</html>
