@@ -261,7 +261,7 @@ export function shuffleBoard() {
 
   const board = Array.from({ length: state.tileCount }, (_, pos) => ({
     tileId: ids[pos],
-    rot: data.randInt(4),
+    rot: state.allowRotation ? data.randInt(4) : 0,
   }));
   state.setBoard(board);
 
@@ -288,6 +288,77 @@ export function shuffleBoard() {
   state.updateCursorStayCount(0);
   state.updateStall(0);
   state.updateDeltaEMA(0);
+}
+
+//////////////////////////////
+// Sort operations
+//////////////////////////////
+export function sortRows() {
+  // Sort each row so tiles are in their original positions within that row
+  const board = state.board;
+
+  for (let row = 0; row < state.rows; row++) {
+    // Get all tiles in this row
+    const rowTiles = [];
+    for (let col = 0; col < state.cols; col++) {
+      const pos = data.posOf(col, row);
+      rowTiles.push({ ...board[pos], pos });
+    }
+
+    // Sort by original tileId position (which column the tile came from)
+    rowTiles.sort((a, b) => {
+      const [colA] = data.xyOf(a.tileId);
+      const [colB] = data.xyOf(b.tileId);
+      return colA - colB;
+    });
+
+    // Put sorted tiles back into the board
+    for (let col = 0; col < state.cols; col++) {
+      const pos = data.posOf(col, row);
+      board[pos] = { tileId: rowTiles[col].tileId, rot: rowTiles[col].rot };
+    }
+  }
+
+  // Recalculate all local scores
+  const useVector = state.useVector;
+  for (let pos = 0; pos < state.tileCount; pos++) {
+    state.localScore[pos] = computeLocalScore(pos, useVector);
+    data.pushFrontier(pos);
+  }
+}
+
+export function sortColumns() {
+  // Sort each column so tiles are in their original positions within that column
+  const board = state.board;
+
+  for (let col = 0; col < state.cols; col++) {
+    // Get all tiles in this column
+    const colTiles = [];
+    for (let row = 0; row < state.rows; row++) {
+      const pos = data.posOf(col, row);
+      colTiles.push({ ...board[pos], pos });
+    }
+
+    // Sort by original tileId position (which row the tile came from)
+    colTiles.sort((a, b) => {
+      const [, rowA] = data.xyOf(a.tileId);
+      const [, rowB] = data.xyOf(b.tileId);
+      return rowA - rowB;
+    });
+
+    // Put sorted tiles back into the board
+    for (let row = 0; row < state.rows; row++) {
+      const pos = data.posOf(col, row);
+      board[pos] = { tileId: colTiles[row].tileId, rot: colTiles[row].rot };
+    }
+  }
+
+  // Recalculate all local scores
+  const useVector = state.useVector;
+  for (let pos = 0; pos < state.tileCount; pos++) {
+    state.localScore[pos] = computeLocalScore(pos, useVector);
+    data.pushFrontier(pos);
+  }
 }
 
 //////////////////////////////
@@ -407,10 +478,14 @@ export function attemptImproveOnce() {
     const curB = state.board[posB];
 
     // Rotation search
-    const rbList = [cand.rot, (cand.rot + 1) & 3, (cand.rot + 3) & 3];
+    const rbList = state.allowRotation
+      ? [cand.rot, (cand.rot + 1) & 3, (cand.rot + 3) & 3]
+      : [curB.rot]; // If rotation disabled, keep current rotation
     for (let rbi = 0; rbi < rbList.length; rbi++) {
       const rb = rbList[rbi];
-      for (let ra = 0; ra < 4; ra++) {
+      const raList = state.allowRotation ? [0, 1, 2, 3] : [curA.rot];
+      for (let rai = 0; rai < raList.length; rai++) {
+        const ra = raList[rai];
         const newA = { tileId: curB.tileId, rot: rb };
         const newB = { tileId: curA.tileId, rot: ra };
 

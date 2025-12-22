@@ -21,6 +21,7 @@ export function initCanvases(canvasCtx, overlayCtx, canvas, overlay) {
 export let running = false;
 export let loaded = false;
 export let useVector = true; // Whether to use vector scoring
+export let allowRotation = true; // Whether tiles can be rotated during optimization
 
 export let imgW = 0;
 export let imgH = 0;
@@ -81,6 +82,9 @@ export function setLoaded(value) {
 }
 export function setUseVector(value) {
   useVector = value;
+}
+export function setAllowRotation(value) {
+  allowRotation = value;
 }
 export function setImgDimensions(w, h) {
   imgW = w;

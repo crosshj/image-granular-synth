@@ -158,6 +158,8 @@ export async function loadFile(file, uiElements) {
   controls.btnReset.disabled = true;
   controls.btnPlay.disabled = true;
   controls.btnStep.disabled = true;
+  controls.btnSortRows.disabled = true;
+  controls.btnSortCols.disabled = true;
   controls.btnPlay.textContent = "Play";
 
   resetHighlights();
@@ -192,6 +194,8 @@ export async function loadFile(file, uiElements) {
   controls.btnReset.disabled = false;
   controls.btnPlay.disabled = false;
   controls.btnStep.disabled = false;
+  controls.btnSortRows.disabled = false;
+  controls.btnSortCols.disabled = false;
 }
 
 //////////////////////////////
@@ -247,6 +251,30 @@ export function handleResetClick(uiElements) {
   drawOverlay();
 }
 
+export function handleSortRowsClick(uiElements) {
+  const { controls } = uiElements;
+  if (!state.loaded) return;
+  state.setRunning(false);
+  controls.btnPlay.textContent = "Play";
+
+  resetHighlights();
+  algorithm.sortRows();
+  drawBoard();
+  drawOverlay();
+}
+
+export function handleSortColumnsClick(uiElements) {
+  const { controls } = uiElements;
+  if (!state.loaded) return;
+  state.setRunning(false);
+  controls.btnPlay.textContent = "Play";
+
+  resetHighlights();
+  algorithm.sortColumns();
+  drawBoard();
+  drawOverlay();
+}
+
 export function handleOverlayChange(e, overlayEl) {
   overlayEl.style.opacity = e.target.checked ? "1" : "0";
   if (e.target.checked) {
@@ -263,6 +291,13 @@ export function handleVectorChange(e) {
     data.pushFrontier(pos);
   }
   drawOverlay();
+}
+
+export function handleRotationChange(e) {
+  const checked = e.target.checked;
+  state.setAllowRotation(checked);
+  // Note: This doesn't recalculate scores immediately,
+  // it will take effect on the next optimization attempt
 }
 
 export function handleSpeedChange(e, inputEls, setSpeed) {

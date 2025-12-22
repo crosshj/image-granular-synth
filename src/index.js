@@ -71,11 +71,14 @@ export function init({ canvas, overlay, controls, stats, inputs }) {
 
   // Set initial state
   state.setUseVector(true);
+  state.setAllowRotation(true);
 
   // Update initial UI state
   controls.btnReset.disabled = true;
   controls.btnPlay.disabled = true;
   controls.btnStep.disabled = true;
+  controls.btnSortRows.disabled = true;
+  controls.btnSortCols.disabled = true;
   controls.btnPlay.textContent = "Play";
 
   // Bind control events
@@ -88,6 +91,12 @@ export function init({ canvas, overlay, controls, stats, inputs }) {
   controls.btnReset.addEventListener("click", () =>
     ui.handleResetClick(uiElements)
   );
+  controls.btnSortRows.addEventListener("click", () =>
+    ui.handleSortRowsClick(uiElements)
+  );
+  controls.btnSortCols.addEventListener("click", () =>
+    ui.handleSortColumnsClick(uiElements)
+  );
 
   // Bind input events
   inputs.file.addEventListener("change", (e) =>
@@ -97,6 +106,9 @@ export function init({ canvas, overlay, controls, stats, inputs }) {
     ui.handleOverlayChange(e, overlayEl)
   );
   inputs.chkVector.addEventListener("change", (e) => ui.handleVectorChange(e));
+  inputs.chkRotation.addEventListener("change", (e) =>
+    ui.handleRotationChange(e)
+  );
   inputs.rngSpeed.addEventListener("input", (e) =>
     ui.handleSpeedChange(e, inputEls, (speed) => {
       currentSpeed = speed;

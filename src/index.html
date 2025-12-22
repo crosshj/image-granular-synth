@@ -17,6 +17,8 @@
         <button id="btnReset" disabled>Reset</button>
         <button id="btnPlay" disabled>Play</button>
         <button id="btnStep" disabled>Step</button>
+        <button id="btnSortRows" disabled>Sort Rows</button>
+        <button id="btnSortCols" disabled>Sort Columns</button>
 
         <label class="toggle">
           <input id="chkOverlay" type="checkbox" checked />
@@ -26,6 +28,11 @@
         <label class="toggle">
           <input id="chkVector" type="checkbox" checked />
           <span>Vector (V2)</span>
+        </label>
+
+        <label class="toggle">
+          <input id="chkRotation" type="checkbox" checked />
+          <span>Rotation</span>
         </label>
 
         <label class="range">
@@ -63,6 +70,8 @@
         btnReset: getElement("btnReset"),
         btnPlay: getElement("btnPlay"),
         btnStep: getElement("btnStep"),
+        btnSortRows: getElement("btnSortRows"),
+        btnSortCols: getElement("btnSortCols"),
       };
 
       const stats = {
@@ -76,6 +85,7 @@
         file: getElement("file"),
         chkOverlay: getElement("chkOverlay"),
         chkVector: getElement("chkVector"),
+        chkRotation: getElement("chkRotation"),
         rngSpeed: getElement("rngSpeed"),
         outSpeed: getElement("outSpeed"),
       };
