@@ -20,7 +20,10 @@ export function drawBoard() {
   state.ctx.clearRect(0, 0, width, height);
 
   for (let pos = 0; pos < state.tileCount; pos++) {
-    const { tileId, rot } = state.board[pos];
+    const tile = state.board[pos];
+    if (!tile) continue; // Skip empty positions in grow mode
+
+    const { tileId, rot } = tile;
     const [x, y] = data.xyOf(pos);
     const px = x * config.TILE_PX;
     const py = y * config.TILE_PX;
@@ -185,7 +188,11 @@ export async function loadFile(file, uiElements) {
   data.precomputeTileMeans();
   data.precomputeSignaturesAndBuckets();
 
-  algorithm.shuffleBoard();
+  if (state.useGrowMode) {
+    algorithm.initializeGrowMode();
+  } else {
+    algorithm.shuffleBoard();
+  }
   drawBoard();
   drawOverlay();
 
@@ -225,18 +232,29 @@ export function handleStepClick(uiElements) {
   state.setRunning(false);
   controls.btnPlay.textContent = "Play";
 
-  const maxTries = 300;
-  for (let i = 0; i < maxTries; i++) {
-    state.incrementAttemptsThisSec();
-    if (algorithm.attemptImproveOnce()) {
-      state.incrementAcceptedThisSec();
-      stats.delta.textContent = state.lastDelta.toFixed(4);
+  if (state.useGrowMode) {
+    // In grow mode, try to place one tile
+    if (algorithm.growOnce()) {
       drawBoard();
       drawOverlay();
-      break;
+      stats.acc.textContent = String(state.tileCount - state.unusedTiles.size);
+      stats.aps.textContent = String(state.unusedTiles.size);
     }
+  } else {
+    // Normal mode - attempt to improve
+    const maxTries = 300;
+    for (let i = 0; i < maxTries; i++) {
+      state.incrementAttemptsThisSec();
+      if (algorithm.attemptImproveOnce()) {
+        state.incrementAcceptedThisSec();
+        stats.delta.textContent = state.lastDelta.toFixed(4);
+        drawBoard();
+        drawOverlay();
+        break;
+      }
+    }
+    tickStats(uiElements);
   }
-  tickStats(uiElements);
 }
 
 export function handleResetClick(uiElements) {
@@ -246,7 +264,11 @@ export function handleResetClick(uiElements) {
   controls.btnPlay.textContent = "Play";
 
   resetHighlights();
-  algorithm.shuffleBoard();
+  if (state.useGrowMode) {
+    algorithm.initializeGrowMode();
+  } else {
+    algorithm.shuffleBoard();
+  }
   drawBoard();
   drawOverlay();
 }
@@ -298,6 +320,12 @@ export function handleRotationChange(e) {
   state.setAllowRotation(checked);
   // Note: This doesn't recalculate scores immediately,
   // it will take effect on the next optimization attempt
+}
+
+export function handleGrowModeChange(e) {
+  const checked = e.target.checked;
+  state.setUseGrowMode(checked);
+  // Note: This will take effect on next reset/load
 }
 
 export function handleToroidalXChange(e) {

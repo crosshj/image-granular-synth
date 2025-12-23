@@ -5,7 +5,7 @@
 //////////////////////////////
 
 // Tunables (edit here)
-export const TILE_PX = 64; // square tile side in source pixels
+export const TILE_PX = 32; // square tile side in source pixels
 export const EDGE_SAMPLES = 8; // points sampled along each edge (perf lever)
 export const RAY_DEPTH = 10; // pixels sampled inward (perf lever)
 export const RAY_ANGLES_DEG = [-60, -30, 0, 30, 60]; // relative to inward normal
@@ -16,9 +16,9 @@ export const K_RANDOM = 16; // exploratory random candidates
 export const TOURNAMENT_T = 8; // fallback A-pick: worst among T random positions
 
 // Selection / acceptance
-export const ESCAPE_MOVE_CHANCE = 1 / 100; // accept a non-improving best move rarely
-export const TABU_STEPS = 80; // tiles moved in last TABU_STEPS are penalized
-export const TABU_OVERRIDE = -0.05; // allow tabu move if improvement at least this
+export const ESCAPE_MOVE_CHANCE = 0.1 / 100; // accept a non-improving best move rarely
+export const TABU_STEPS = 50; // tiles moved in last TABU_STEPS are penalized
+export const TABU_OVERRIDE = -0.1; // allow tabu move if improvement at least this
 
 // Scoring weights (perceptual-ish)
 export const W_COLOR = 1.0;
@@ -55,3 +55,6 @@ export const COHESION_SPAN = 0.06;
 // Performance / responsiveness
 export const DEFAULT_SPEED = 20; // UI range 1..60
 export const MAX_TRIES_PER_FRAME = 400; // hard cap for safety
+
+// Grow mode
+export const GROW_MATCH_THRESHOLD = 0.8; // Initial threshold for tile matching in grow mode

@@ -66,6 +66,8 @@ export function seamDir(pos, dir, useVector) {
   if (pN === null) return 0; // No neighbor, no seam cost
   const a = state.board[pos];
   const b = state.board[pN];
+  // In grow mode, tiles can be null
+  if (!a || !b) return 0;
   return scoreSeam(
     a.tileId,
     a.rot,
@@ -78,7 +80,10 @@ export function seamDir(pos, dir, useVector) {
 }
 
 export function blobTerm(pos) {
-  const t = state.board[pos].tileId;
+  const tile = state.board[pos];
+  if (!tile) return 0; // In grow mode, position might be empty
+
+  const t = tile.tileId;
   const L1 = state.tileMeanL[t],
     A1 = state.tileMeanA[t],
     B1 = state.tileMeanB[t];
@@ -90,7 +95,9 @@ export function blobTerm(pos) {
   for (let d = 0; d < 4; d++) {
     const neighborIdx = data.neighborPos(pos, d);
     if (neighborIdx === null) continue; // Skip null neighbors
-    const tn = state.board[neighborIdx].tileId;
+    const neighborTile = state.board[neighborIdx];
+    if (!neighborTile) continue; // In grow mode, neighbor might be empty
+    const tn = neighborTile.tileId;
     sL += state.tileMeanL[tn];
     sA += state.tileMeanA[tn];
     sB += state.tileMeanB[tn];
@@ -263,6 +270,176 @@ export function cursorOnFail() {
     Math.min(config.STALL_HARD_CAP, state.stall + config.STALL_INC_ON_FAIL)
   );
   state.updateDeltaEMA((1 - config.DELTA_EMA_ALPHA) * state.deltaEMA);
+}
+
+//////////////////////////////
+// Grow from center mode
+//////////////////////////////
+
+export function initializeGrowMode() {
+  // Start with empty board
+  const board = Array.from({ length: state.tileCount }, () => null);
+  state.setBoard(board);
+
+  // Track which tiles have been used
+  const unusedTiles = new Set(
+    Array.from({ length: state.tileCount }, (_, i) => i)
+  );
+  state.setUnusedTiles(unusedTiles);
+
+  // Place first tile near center
+  const centerPos = data.posOf(
+    Math.floor(state.cols / 2),
+    Math.floor(state.rows / 2)
+  );
+
+  const firstTile = data.randInt(state.tileCount);
+  board[centerPos] = {
+    tileId: firstTile,
+    rot: state.allowRotation ? data.randInt(4) : 0,
+  };
+  unusedTiles.delete(firstTile);
+
+  // Initialize growth frontier - positions adjacent to placed tiles
+  const growthFrontier = new Set();
+  for (let d = 0; d < 4; d++) {
+    const neighbor = data.neighborPos(centerPos, d);
+    if (neighbor !== null && board[neighbor] === null) {
+      growthFrontier.add(neighbor);
+    }
+  }
+  state.setGrowthFrontier(growthFrontier);
+
+  const localScore = new Float64Array(state.tileCount);
+  state.setLocalScore(localScore);
+
+  const posStamp = new Uint32Array(state.tileCount);
+  state.setPosStamp(posStamp);
+
+  const heap = new data.MaxHeap();
+  state.setHeap(heap);
+
+  // Initialize tabu (needed if user switches to normal mode)
+  const lastMovedStep = new Int32Array(state.tileCount);
+  for (let i = 0; i < state.tileCount; i++) lastMovedStep[i] = -999999;
+  state.setTabu(lastMovedStep, 0);
+
+  state.updateCursorPos(centerPos);
+  state.updateCursorStayCount(0);
+  state.updateStall(0);
+  state.updateDeltaEMA(0);
+
+  //   state.setGrowMatchThreshold(0.5);
+}
+
+export function findBestTileForPosition(pos, matchThreshold, useVector) {
+  if (state.board[pos] !== null) return null; // Already filled
+
+  let bestTile = null;
+  let bestRot = 0;
+  let bestScore = Infinity;
+
+  // Get neighbors that are already placed
+  const neighbors = [];
+  for (let d = 0; d < 4; d++) {
+    const neighborPos = data.neighborPos(pos, d);
+    if (neighborPos !== null && state.board[neighborPos] !== null) {
+      neighbors.push({ pos: neighborPos, dir: d });
+    }
+  }
+
+  if (neighbors.length === 0) return null; // No neighbors to match against
+
+  // Try each unused tile
+  for (const tileId of state.unusedTiles) {
+    const rotations = state.allowRotation ? [0, 1, 2, 3] : [0];
+
+    for (const rot of rotations) {
+      let totalScore = 0;
+      let edgeCount = 0;
+
+      // Score against all neighbors
+      for (const { pos: neighborPos, dir } of neighbors) {
+        const neighbor = state.board[neighborPos];
+        const score = scoreSeam(
+          tileId,
+          rot,
+          dir,
+          neighbor.tileId,
+          neighbor.rot,
+          data.oppDir(dir),
+          useVector
+        );
+        totalScore += score;
+        edgeCount++;
+      }
+
+      const avgScore = totalScore / edgeCount;
+
+      if (avgScore < bestScore) {
+        bestScore = avgScore;
+        bestTile = tileId;
+        bestRot = rot;
+      }
+    }
+  }
+
+  // Only return if score is below threshold (good match)
+  if (bestScore < matchThreshold) {
+    return { tileId: bestTile, rot: bestRot, score: bestScore };
+  }
+
+  return null;
+}
+
+export function growOnce() {
+  if (!state.loaded || state.unusedTiles.size === 0) return false;
+
+  const useVector = state.useVector;
+  const matchThreshold = state.growMatchThreshold;
+
+  // Try frontier positions in order of how many neighbors they have
+  const frontierArray = Array.from(state.growthFrontier);
+  frontierArray.sort((a, b) => {
+    const countA = [0, 1, 2, 3].filter((d) => {
+      const n = data.neighborPos(a, d);
+      return n !== null && state.board[n] !== null;
+    }).length;
+    const countB = [0, 1, 2, 3].filter((d) => {
+      const n = data.neighborPos(b, d);
+      return n !== null && state.board[n] !== null;
+    }).length;
+    return countB - countA; // More neighbors first
+  });
+
+  for (const pos of frontierArray) {
+    const result = findBestTileForPosition(pos, matchThreshold, useVector);
+
+    if (result !== null) {
+      // Place the tile
+      state.board[pos] = { tileId: result.tileId, rot: result.rot };
+      state.unusedTiles.delete(result.tileId);
+      state.growthFrontier.delete(pos);
+
+      // Add new frontier positions
+      for (let d = 0; d < 4; d++) {
+        const neighbor = data.neighborPos(pos, d);
+        if (neighbor !== null && state.board[neighbor] === null) {
+          state.growthFrontier.add(neighbor);
+        }
+      }
+
+      // Update local score for the placed position
+      state.localScore[pos] = computeLocalScore(pos, useVector);
+
+      state.setHighlights(pos, -1);
+      return true;
+    }
+  }
+
+  // No good matches found, relax threshold
+  state.setGrowMatchThreshold(matchThreshold * 1.05);
+  return false;
 }
 
 //////////////////////////////

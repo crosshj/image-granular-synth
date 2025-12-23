@@ -2,6 +2,8 @@
 // Application State & Data Structures
 //////////////////////////////
 
+import * as config from "./config.js";
+
 // Canvas contexts and elements (initialized via initCanvases)
 export let ctx = null;
 export let octx = null;
@@ -24,6 +26,7 @@ export let useVector = true; // Whether to use vector scoring
 export let allowRotation = true; // Whether tiles can be rotated during optimization
 export let useToroidalX = true; // Whether to wrap around left-right edges
 export let useToroidalY = true; // Whether to wrap around top-bottom edges
+export let useGrowMode = false; // Whether to use grow-from-center mode instead of shuffle
 
 export let imgW = 0;
 export let imgH = 0;
@@ -75,6 +78,11 @@ export let acceptedThisSec = 0;
 export let lastStatT = performance.now();
 export let lastDelta = 0;
 
+// Grow mode state
+export let unusedTiles = new Set();
+export let growthFrontier = new Set();
+export let growMatchThreshold = config.GROW_MATCH_THRESHOLD;
+
 // State setters (needed because of const exports)
 export function setRunning(value) {
   running = value;
@@ -93,6 +101,9 @@ export function setUseToroidalX(value) {
 }
 export function setUseToroidalY(value) {
   useToroidalY = value;
+}
+export function setUseGrowMode(value) {
+  useGrowMode = value;
 }
 export function setImgDimensions(w, h) {
   imgW = w;
@@ -182,4 +193,13 @@ export function updateStepIndex() {
 }
 export function updateLastMovedStep(tileId, step) {
   lastMovedStep[tileId] = step;
+}
+export function setUnusedTiles(value) {
+  unusedTiles = value;
+}
+export function setGrowthFrontier(value) {
+  growthFrontier = value;
+}
+export function setGrowMatchThreshold(value) {
+  growMatchThreshold = value || config.GROW_MATCH_THRESHOLD;
 }

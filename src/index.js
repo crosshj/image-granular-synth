@@ -32,24 +32,53 @@ let inputEls = null;
 //////////////////////////////
 function loop() {
   if (state.running && state.loaded && uiElements) {
-    const budgetMs = data.clamp(1 + currentSpeed * 0.3, 1, 10);
+    if (state.useGrowMode) {
+      // In grow mode, try to place one tile per frame
+      const budgetMs = data.clamp(1 + currentSpeed * 0.3, 1, 10);
+      const t0 = performance.now();
+      let placed = 0;
 
-    const t0 = performance.now();
-    let tries = 0;
-    while (
-      performance.now() - t0 < budgetMs &&
-      tries < config.MAX_TRIES_PER_FRAME
-    ) {
-      tries++;
-      state.incrementAttemptsThisSec();
-      if (algorithm.attemptImproveOnce()) {
-        state.incrementAcceptedThisSec();
-        uiElements.stats.delta.textContent = state.lastDelta.toFixed(4);
-        ui.drawBoard();
-        ui.drawOverlay();
+      while (performance.now() - t0 < budgetMs && placed < 5) {
+        if (algorithm.growOnce()) {
+          placed++;
+          ui.drawBoard();
+          ui.drawOverlay();
+        } else {
+          // No tiles could be placed, might be finished or stuck
+          if (state.unusedTiles.size === 0) {
+            // All tiles placed, stop running
+            state.setRunning(false);
+            uiElements.controls.btnPlay.textContent = "Play";
+          }
+          break;
+        }
       }
+
+      uiElements.stats.acc.textContent = String(
+        state.tileCount - state.unusedTiles.size
+      );
+      uiElements.stats.aps.textContent = String(state.unusedTiles.size);
+    } else {
+      // Normal optimization mode
+      const budgetMs = data.clamp(1 + currentSpeed * 0.3, 1, 10);
+
+      const t0 = performance.now();
+      let tries = 0;
+      while (
+        performance.now() - t0 < budgetMs &&
+        tries < config.MAX_TRIES_PER_FRAME
+      ) {
+        tries++;
+        state.incrementAttemptsThisSec();
+        if (algorithm.attemptImproveOnce()) {
+          state.incrementAcceptedThisSec();
+          uiElements.stats.delta.textContent = state.lastDelta.toFixed(4);
+          ui.drawBoard();
+          ui.drawOverlay();
+        }
+      }
+      ui.tickStats(uiElements);
     }
-    ui.tickStats(uiElements);
   }
   requestAnimationFrame(loop);
 }
@@ -110,6 +139,9 @@ export function init({ canvas, overlay, controls, stats, inputs }) {
   inputs.chkVector.addEventListener("change", (e) => ui.handleVectorChange(e));
   inputs.chkRotation.addEventListener("change", (e) =>
     ui.handleRotationChange(e)
+  );
+  inputs.chkGrowMode.addEventListener("change", (e) =>
+    ui.handleGrowModeChange(e)
   );
   inputs.chkToroidalX.addEventListener("change", (e) =>
     ui.handleToroidalXChange(e)
