@@ -57,4 +57,4 @@ export const DEFAULT_SPEED = 20; // UI range 1..60
 export const MAX_TRIES_PER_FRAME = 400; // hard cap for safety
 
 // Grow mode
-export const GROW_MATCH_THRESHOLD = 0.8; // Initial threshold for tile matching in grow mode
+export const GROW_MATCH_THRESHOLD = 0.95; // Initial threshold for tile matching in grow mode
