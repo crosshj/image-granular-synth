@@ -86,7 +86,14 @@ function loop() {
 //////////////////////////////
 // Initialization & Public API
 //////////////////////////////
-export function init({ canvas, overlay, controls, stats, inputs, loadingIndicator }) {
+export function init({
+  canvas,
+  overlay,
+  controls,
+  stats,
+  inputs,
+  loadingIndicator,
+}) {
   uiElements = { controls, stats, loadingIndicator };
   overlayEl = overlay;
   inputEls = inputs;

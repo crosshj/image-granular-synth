@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- 3x3 Grid of white tiles with varied opacity -->
+  <!-- Top row -->
+  <rect x="2" y="2" width="9" height="9" fill="white" opacity="0.85"/>
+  <rect x="11.5" y="2" width="9" height="9" fill="white" opacity="1"/>
+  <rect x="21" y="2" width="9" height="9" fill="white" opacity="0.6"/>
+  
+  <!-- Middle row -->
+  <rect x="2" y="11.5" width="9" height="9" fill="white" opacity="0.7"/>
+  <rect x="11.5" y="11.5" width="9" height="9" fill="white" opacity="0.9"/>
+  <rect x="21" y="11.5" width="9" height="9" fill="white" opacity="1"/>
+  
+  <!-- Bottom row -->
+  <rect x="2" y="21" width="9" height="9" fill="white" opacity="1"/>
+  <rect x="11.5" y="21" width="9" height="9" fill="white" opacity="0.75"/>
+  <rect x="21" y="21" width="9" height="9" fill="white" opacity="0.8"/>
+</svg>

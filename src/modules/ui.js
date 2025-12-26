@@ -107,15 +107,18 @@ export async function imageToCroppedImageData(file) {
   c.imageSmoothingEnabled = false;
 
   c.drawImage(img, 0, 0, imgW, imgH, 0, 0, imgW, imgH);
-  
+
   // Save cropped image to localStorage
   try {
-    const imageDataURL = off.toDataURL('image/png');
-    localStorage.setItem('imageSynthImage', imageDataURL);
+    const imageDataURL = off.toDataURL("image/png");
+    localStorage.setItem("imageSynthImage", imageDataURL);
   } catch (e) {
-    console.warn('Failed to save image to localStorage (image may be too large):', e);
+    console.warn(
+      "Failed to save image to localStorage (image may be too large):",
+      e
+    );
   }
-  
+
   return c.getImageData(0, 0, imgW, imgH);
 }
 
@@ -434,7 +437,7 @@ export async function handleFileChange(e, uiElements) {
 
 export async function tryLoadSavedImage(uiElements) {
   try {
-    const savedImageURL = localStorage.getItem('imageSynthImage');
+    const savedImageURL = localStorage.getItem("imageSynthImage");
     if (!savedImageURL) {
       return false;
     }
@@ -510,7 +513,7 @@ export async function tryLoadSavedImage(uiElements) {
 
     return true;
   } catch (e) {
-    console.warn('Failed to load saved image:', e);
+    console.warn("Failed to load saved image:", e);
     // Hide loading indicator on error
     if (uiElements.loadingIndicator) {
       uiElements.loadingIndicator.style.display = "none";
