@@ -86,8 +86,8 @@ function loop() {
 //////////////////////////////
 // Initialization & Public API
 //////////////////////////////
-export function init({ canvas, overlay, controls, stats, inputs }) {
-  uiElements = { controls, stats };
+export function init({ canvas, overlay, controls, stats, inputs, loadingIndicator }) {
+  uiElements = { controls, stats, loadingIndicator };
   overlayEl = overlay;
   inputEls = inputs;
 
@@ -106,6 +106,7 @@ export function init({ canvas, overlay, controls, stats, inputs }) {
 
   // Update initial UI state
   controls.btnReset.disabled = true;
+  controls.btnRandomize.disabled = true;
   controls.btnPlay.disabled = true;
   controls.btnStep.disabled = true;
   controls.btnSortRows.disabled = true;
@@ -121,6 +122,9 @@ export function init({ canvas, overlay, controls, stats, inputs }) {
   );
   controls.btnReset.addEventListener("click", () =>
     ui.handleResetClick(uiElements)
+  );
+  controls.btnRandomize.addEventListener("click", () =>
+    ui.handleRandomizeClick(uiElements)
   );
   controls.btnSortRows.addEventListener("click", () =>
     ui.handleSortRowsClick(uiElements)
@@ -154,6 +158,9 @@ export function init({ canvas, overlay, controls, stats, inputs }) {
       currentSpeed = speed;
     })
   );
+
+  // Try to load saved image from localStorage
+  ui.tryLoadSavedImage(uiElements);
 
   // Start the loop
   loop();

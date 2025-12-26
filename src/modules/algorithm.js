@@ -329,7 +329,7 @@ export function initializeGrowMode() {
   state.updateStall(0);
   state.updateDeltaEMA(0);
 
-  //   state.setGrowMatchThreshold(0.5);
+  state.setGrowMatchThreshold();
 }
 
 export function findBestTileForPosition(pos, matchThreshold, useVector) {
@@ -445,6 +445,46 @@ export function growOnce() {
 //////////////////////////////
 // Board init / shuffle
 //////////////////////////////
+export function initializeOrderedBoard() {
+  // Create board with tiles in their original positions (no shuffling)
+  const board = Array.from({ length: state.tileCount }, (_, pos) => ({
+    tileId: pos,
+    rot: 0,
+  }));
+  state.setBoard(board);
+
+  // Store a copy as the original board state
+  const originalBoard = board.map((tile) => ({ ...tile }));
+  state.setOriginalBoard(originalBoard);
+
+  // Save to localStorage
+  saveOriginalBoardToStorage();
+
+  const localScore = new Float64Array(state.tileCount);
+  state.setLocalScore(localScore);
+
+  const posStamp = new Uint32Array(state.tileCount);
+  state.setPosStamp(posStamp);
+
+  const heap = new data.MaxHeap();
+  state.setHeap(heap);
+
+  const lastMovedStep = new Int32Array(state.tileCount);
+  for (let i = 0; i < state.tileCount; i++) lastMovedStep[i] = -999999;
+  state.setTabu(lastMovedStep, 0);
+
+  const useVector = state.useVector;
+  for (let pos = 0; pos < state.tileCount; pos++) {
+    state.localScore[pos] = computeLocalScore(pos, useVector);
+    data.pushFrontier(pos);
+  }
+
+  state.updateCursorPos(data.randInt(state.tileCount));
+  state.updateCursorStayCount(0);
+  state.updateStall(0);
+  state.updateDeltaEMA(0);
+}
+
 export function shuffleBoard() {
   const ids = Array.from({ length: state.tileCount }, (_, i) => i);
   data.shuffleInPlace(ids);
@@ -478,6 +518,77 @@ export function shuffleBoard() {
   state.updateCursorStayCount(0);
   state.updateStall(0);
   state.updateDeltaEMA(0);
+}
+
+export function resetToOriginalBoard() {
+  // Restore board from the stored original state
+  const board = state.originalBoard.map((tile) => ({ ...tile }));
+  state.setBoard(board);
+
+  const localScore = new Float64Array(state.tileCount);
+  state.setLocalScore(localScore);
+
+  const posStamp = new Uint32Array(state.tileCount);
+  state.setPosStamp(posStamp);
+
+  const heap = new data.MaxHeap();
+  state.setHeap(heap);
+
+  const lastMovedStep = new Int32Array(state.tileCount);
+  for (let i = 0; i < state.tileCount; i++) lastMovedStep[i] = -999999;
+  state.setTabu(lastMovedStep, 0);
+
+  const useVector = state.useVector;
+  for (let pos = 0; pos < state.tileCount; pos++) {
+    state.localScore[pos] = computeLocalScore(pos, useVector);
+    data.pushFrontier(pos);
+  }
+
+  state.updateCursorPos(data.randInt(state.tileCount));
+  state.updateCursorStayCount(0);
+  state.updateStall(0);
+  state.updateDeltaEMA(0);
+}
+
+//////////////////////////////
+// LocalStorage persistence
+//////////////////////////////
+function saveOriginalBoardToStorage() {
+  try {
+    const stateData = {
+      originalBoard: state.originalBoard,
+      cols: state.cols,
+      rows: state.rows,
+      tileCount: state.tileCount,
+    };
+    localStorage.setItem("imageSynthOriginalBoard", JSON.stringify(stateData));
+  } catch (e) {
+    console.warn("Failed to save original board to localStorage:", e);
+  }
+}
+
+export function loadOriginalBoardFromStorage() {
+  try {
+    const stored = localStorage.getItem("imageSynthOriginalBoard");
+    if (!stored) return false;
+
+    const stateData = JSON.parse(stored);
+
+    // Verify dimensions match current image
+    if (
+      stateData.cols !== state.cols ||
+      stateData.rows !== state.rows ||
+      stateData.tileCount !== state.tileCount
+    ) {
+      return false;
+    }
+
+    state.setOriginalBoard(stateData.originalBoard);
+    return true;
+  } catch (e) {
+    console.warn("Failed to load original board from localStorage:", e);
+    return false;
+  }
 }
 
 //////////////////////////////

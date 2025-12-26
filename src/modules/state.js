@@ -37,6 +37,7 @@ export let tileCount = 0;
 // Data models
 export let tileBitmaps = []; // ImageBitmap per original tile (unrotated)
 export let board = []; // board[pos] = { tileId, rot }
+export let originalBoard = []; // originalBoard[pos] = { tileId, rot } - stores initial ordered state
 export let localScore = null; // localScore[pos] = sum of 4 seams + blob term
 
 export let hiA = -1; // overlay highlight pos A
@@ -119,6 +120,9 @@ export function setTileBitmaps(value) {
 }
 export function setBoard(value) {
   board = value;
+}
+export function setOriginalBoard(value) {
+  originalBoard = value;
 }
 export function setLocalScore(value) {
   localScore = value;

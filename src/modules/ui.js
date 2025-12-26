@@ -107,6 +107,39 @@ export async function imageToCroppedImageData(file) {
   c.imageSmoothingEnabled = false;
 
   c.drawImage(img, 0, 0, imgW, imgH, 0, 0, imgW, imgH);
+  
+  // Save cropped image to localStorage
+  try {
+    const imageDataURL = off.toDataURL('image/png');
+    localStorage.setItem('imageSynthImage', imageDataURL);
+  } catch (e) {
+    console.warn('Failed to save image to localStorage (image may be too large):', e);
+  }
+  
+  return c.getImageData(0, 0, imgW, imgH);
+}
+
+export async function imageDataURLToCroppedImageData(dataURL) {
+  const img = new Image();
+  img.decoding = "async";
+  img.src = dataURL;
+  await img.decode();
+
+  const cols = (img.width / config.TILE_PX) | 0;
+  const rows = (img.height / config.TILE_PX) | 0;
+  const imgW = cols * config.TILE_PX;
+  const imgH = rows * config.TILE_PX;
+
+  state.setGridDimensions(cols, rows);
+  state.setImgDimensions(imgW, imgH);
+
+  const off = document.createElement("canvas");
+  off.width = imgW;
+  off.height = imgH;
+  const c = off.getContext("2d", { alpha: false });
+  c.imageSmoothingEnabled = false;
+
+  c.drawImage(img, 0, 0, imgW, imgH, 0, 0, imgW, imgH);
   return c.getImageData(0, 0, imgW, imgH);
 }
 
@@ -153,7 +186,7 @@ export async function buildTileBitmaps(imageData) {
 }
 
 export async function loadFile(file, uiElements) {
-  const { controls, stats } = uiElements;
+  const { controls, stats, loadingIndicator } = uiElements;
 
   state.setRunning(false);
   state.setLoaded(false);
@@ -163,7 +196,13 @@ export async function loadFile(file, uiElements) {
   controls.btnStep.disabled = true;
   controls.btnSortRows.disabled = true;
   controls.btnSortCols.disabled = true;
+  controls.btnRandomize.disabled = true;
   controls.btnPlay.textContent = "Play";
+
+  // Show loading indicator
+  if (loadingIndicator) {
+    loadingIndicator.style.display = "flex";
+  }
 
   resetHighlights();
 
@@ -191,14 +230,27 @@ export async function loadFile(file, uiElements) {
   if (state.useGrowMode) {
     algorithm.initializeGrowMode();
   } else {
-    algorithm.shuffleBoard();
+    // Initialize with ordered board (no randomization on load)
+    // Try to load from localStorage first, otherwise create new ordered board
+    if (!algorithm.loadOriginalBoardFromStorage()) {
+      algorithm.initializeOrderedBoard();
+    } else {
+      // If loaded from storage, still need to initialize the board state
+      algorithm.resetToOriginalBoard();
+    }
   }
   drawBoard();
   drawOverlay();
 
   state.setLoaded(true);
 
+  // Hide loading indicator
+  if (loadingIndicator) {
+    loadingIndicator.style.display = "none";
+  }
+
   controls.btnReset.disabled = false;
+  controls.btnRandomize.disabled = false;
   controls.btnPlay.disabled = false;
   controls.btnStep.disabled = false;
   controls.btnSortRows.disabled = false;
@@ -267,8 +319,21 @@ export function handleResetClick(uiElements) {
   if (state.useGrowMode) {
     algorithm.initializeGrowMode();
   } else {
-    algorithm.shuffleBoard();
+    // Reset to original ordered state
+    algorithm.resetToOriginalBoard();
   }
+  drawBoard();
+  drawOverlay();
+}
+
+export function handleRandomizeClick(uiElements) {
+  const { controls } = uiElements;
+  if (!state.loaded) return;
+  state.setRunning(false);
+  controls.btnPlay.textContent = "Play";
+
+  resetHighlights();
+  algorithm.shuffleBoard();
   drawBoard();
   drawOverlay();
 }
@@ -364,5 +429,92 @@ export async function handleFileChange(e, uiElements) {
   const file = e.target.files?.[0];
   if (file) {
     await loadFile(file, uiElements);
+  }
+}
+
+export async function tryLoadSavedImage(uiElements) {
+  try {
+    const savedImageURL = localStorage.getItem('imageSynthImage');
+    if (!savedImageURL) {
+      return false;
+    }
+
+    const { controls, stats, loadingIndicator } = uiElements;
+
+    state.setRunning(false);
+    state.setLoaded(false);
+
+    controls.btnReset.disabled = true;
+    controls.btnRandomize.disabled = true;
+    controls.btnPlay.disabled = true;
+    controls.btnStep.disabled = true;
+    controls.btnSortRows.disabled = true;
+    controls.btnSortCols.disabled = true;
+    controls.btnPlay.textContent = "Play";
+
+    // Show loading indicator
+    if (loadingIndicator) {
+      loadingIndicator.style.display = "flex";
+    }
+
+    resetHighlights();
+
+    const imageData = await imageDataURLToCroppedImageData(savedImageURL);
+
+    // Resize canvases
+    state.canvasEl.width = state.imgW;
+    state.canvasEl.height = state.imgH;
+    state.overlayEl.width = state.imgW;
+    state.overlayEl.height = state.imgH;
+    state.ctx.imageSmoothingEnabled = false;
+    state.octx.imageSmoothingEnabled = false;
+
+    stats.tiles.textContent = `${state.cols}×${state.rows} = ${state.tileCount}`;
+    stats.aps.textContent = "0";
+    stats.acc.textContent = "0";
+    stats.delta.textContent = "0";
+
+    data.precomputeOKLab(imageData);
+    await buildTileBitmaps(imageData);
+
+    data.precomputeTileMeans();
+    data.precomputeSignaturesAndBuckets();
+
+    if (state.useGrowMode) {
+      algorithm.initializeGrowMode();
+    } else {
+      // Try to load from localStorage first, otherwise create new ordered board
+      if (!algorithm.loadOriginalBoardFromStorage()) {
+        algorithm.initializeOrderedBoard();
+      } else {
+        // If loaded from storage, still need to initialize the board state
+        algorithm.resetToOriginalBoard();
+      }
+    }
+    drawBoard();
+    drawOverlay();
+
+    state.setLoaded(true);
+
+    // Hide loading indicator
+    if (loadingIndicator) {
+      loadingIndicator.style.display = "none";
+    }
+
+    controls.btnReset.disabled = false;
+    controls.btnRandomize.disabled = false;
+    controls.btnPlay.disabled = false;
+    controls.btnStep.disabled = false;
+    controls.btnSortRows.disabled = false;
+    controls.btnSortCols.disabled = false;
+
+    return true;
+  } catch (e) {
+    console.warn('Failed to load saved image:', e);
+    // Hide loading indicator on error
+    if (uiElements.loadingIndicator) {
+      uiElements.loadingIndicator.style.display = "none";
+    }
+    return false;
   }
 }

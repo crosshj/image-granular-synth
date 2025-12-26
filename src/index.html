@@ -15,6 +15,7 @@
         </label>
 
         <button id="btnReset" disabled>Reset</button>
+        <button id="btnRandomize" disabled>Randomize</button>
         <button id="btnPlay" disabled>Play</button>
         <button id="btnStep" disabled>Step</button>
         <button id="btnSortRows" disabled>Sort Rows</button>
@@ -69,6 +70,10 @@
       <div id="stage">
         <canvas id="canvas"></canvas>
         <canvas id="overlay"></canvas>
+        <div id="loadingIndicator" class="loading-indicator" style="display: none;">
+          <div class="loading-spinner"></div>
+          <div class="loading-text">Loading image...</div>
+        </div>
       </div>
     </main>
 
@@ -80,9 +85,11 @@
       // Collect DOM element references
       const canvas = getElement("canvas");
       const overlay = getElement("overlay");
+      const loadingIndicator = getElement("loadingIndicator");
 
       const controls = {
         btnReset: getElement("btnReset"),
+        btnRandomize: getElement("btnRandomize"),
         btnPlay: getElement("btnPlay"),
         btnStep: getElement("btnStep"),
         btnSortRows: getElement("btnSortRows"),
@@ -109,7 +116,7 @@
       };
 
       // Initialize app with canvas and UI elements
-      init({ canvas, overlay, controls, stats, inputs });
+      init({ canvas, overlay, controls, stats, inputs, loadingIndicator });
     </script>
   </body>
 </html>
