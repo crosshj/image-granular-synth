@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
+    />
+    <title>Phoneme Synth</title>
+    <link rel="stylesheet" href="index.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h1>🎵 Phoneme Synth</h1>
+
+      <div class="input-group">
+        <label class="input-label" for="wordDisplay">CURRENT WORD</label>
+        <div class="word-display" id="wordDisplay">-</div>
+      </div>
+
+      <div class="input-group">
+        <label for="interval" class="input-label">TIME INTERVAL</label>
+        <input
+          type="number"
+          id="interval"
+          value="5000"
+          min="1000"
+          max="60000"
+          step="1000"
+        />
+      </div>
+
+      <div class="input-group">
+        <label for="speechMode" class="input-label">SPEECH MODE</label>
+        <select id="speechMode">
+          <option value="sam" selected>SAM (Retro C64 with Reverb)</option>
+          <option value="webspeech">Web Speech API (No Reverb)</option>
+          <option value="synthetic">Synthetic Formants (with Reverb)</option>
+        </select>
+      </div>
+
+      <button id="b" class="play-button" aria-label="Play"></button>
+    </div>
+
+    <script type="module">
+      import { init } from "./index.js";
+      init();
+    </script>
+  </body>
+</html>
